@@ -35,6 +35,7 @@ Agent::run_loop(std::vector<common_chat_msg>& messages,
     }
 
     std::vector<common_chat_tool> tool_definitions;
+    tool_definitions.reserve(tools.size());
     for (const auto& tool : tools) {
         tool_definitions.push_back(tool->get_definition());
     }
