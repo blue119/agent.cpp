@@ -16,7 +16,7 @@ if(LLAMA_CPP_DIR)
     set(LLAMA_SOURCE_DIR "${LLAMA_CPP_DIR}")
     message(STATUS "Using custom llama.cpp from: ${LLAMA_SOURCE_DIR}")
 else()
-    set(LLAMA_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/extern/llama.cpp")
+    set(LLAMA_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/llama.cpp")
     if(NOT EXISTS "${LLAMA_SOURCE_DIR}/CMakeLists.txt")
         message(FATAL_ERROR
             "llama.cpp submodule not found at ${LLAMA_SOURCE_DIR}\n"
