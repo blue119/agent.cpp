@@ -2,6 +2,7 @@
 #include "calculator_tool.h"
 #include "callbacks.h"
 #include "chat.h"
+#include "chat_loop.h"
 #include "llama.h"
 #include "logging_callback.h"
 #include "model.h"
@@ -288,32 +289,8 @@ main(int argc, char** argv)
     printf("\nTracing Agent ready! Try asking me to do some calculations.\n");
     printf("   Type an empty line to quit.\n\n");
 
-    std::vector<common_chat_msg> messages;
-    std::string input;
-
-    while (true) {
-        printf("\033[32m> \033[0m");
-        std::string user_input;
-        std::getline(std::cin, user_input);
-
-        if (user_input.empty()) {
-            break;
-        }
-
-        common_chat_msg user_msg;
-        user_msg.role = "user";
-        user_msg.content = user_input;
-        messages.push_back(user_msg);
-
-        agent.run_loop(messages, [](const std::string& chunk) {
-            printf("\033[33m%s\033[0m", chunk.c_str());
-            fflush(stdout);
-        });
-        printf("\n");
-    }
+    run_chat_loop(agent);
 
     CleanupTracer();
-
-    printf("\n👋 Goodbye!\n");
     return 0;
 }

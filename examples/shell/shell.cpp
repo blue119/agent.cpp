@@ -1,6 +1,7 @@
 #include "agent.h"
 #include "callbacks.h"
 #include "chat.h"
+#include "chat_loop.h"
 #include "llama.h"
 #include "model.h"
 #include "tool.h"
@@ -243,37 +244,6 @@ main(int argc, char** argv)
     printf("   This agent can execute shell commands and scripts.\n");
     printf("Type an empty line to quit.\n\n");
 
-    std::vector<common_chat_msg> messages;
-
-    while (true) {
-        if (isatty(fileno(stdout))) {
-            printf("\033[32m> \033[0m");
-        } else {
-            printf("> ");
-        }
-        std::string user_input;
-        std::getline(std::cin, user_input);
-
-        if (user_input.empty()) {
-            break;
-        }
-
-        common_chat_msg user_msg;
-        user_msg.role = "user";
-        user_msg.content = user_input;
-        messages.push_back(user_msg);
-
-        agent.run_loop(messages, [](const std::string& chunk) {
-            if (isatty(fileno(stdout))) {
-                printf("\033[33m%s\033[0m", chunk.c_str());
-            } else {
-                printf("%s", chunk.c_str());
-            }
-            fflush(stdout);
-        });
-        printf("\n");
-    }
-
-    printf("\n👋 Goodbye!\n");
+    run_chat_loop(agent);
     return 0;
 }
