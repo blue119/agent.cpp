@@ -1,0 +1,116 @@
+#include "agent.h"
+#include <algorithm>
+#include <cstdio>
+
+Agent::Agent(std::unique_ptr<Model> model,
+             std::vector<std::unique_ptr<Tool>> tools,
+             std::vector<std::unique_ptr<Callback>> callbacks,
+             const std::string& instructions)
+  : model(std::move(model))
+  , tools(std::move(tools))
+  , callbacks(std::move(callbacks))
+  , instructions(instructions)
+{
+}
+
+std::string
+Agent::run_loop(std::vector<common_chat_msg>& messages,
+                const ResponseCallback& callback)
+{
+    if (!instructions.empty()) {
+        bool has_instructions = !messages.empty() &&
+                                messages[0].role == "system" &&
+                                messages[0].content == instructions;
+
+        if (!has_instructions) {
+            common_chat_msg system_msg;
+            system_msg.role = "system";
+            system_msg.content = instructions;
+            messages.insert(messages.begin(), system_msg);
+        }
+    }
+
+    for (const auto& callback : callbacks) {
+        callback->before_agent_loop(messages);
+    }
+
+    std::vector<common_chat_tool> tool_definitions;
+    for (const auto& tool : tools) {
+        tool_definitions.push_back(tool->get_definition());
+    }
+
+    while (true) {
+        for (const auto& callback : callbacks) {
+            callback->before_llm_call(messages);
+        }
+
+        auto parsed_msg = model->generate(messages, tool_definitions, callback);
+
+        for (const auto& callback : callbacks) {
+            callback->after_llm_call(parsed_msg);
+        }
+
+        messages.push_back(parsed_msg);
+
+        if (parsed_msg.tool_calls.empty()) {
+            std::string response = parsed_msg.content;
+            for (const auto& callback : callbacks) {
+                callback->after_agent_loop(messages, response);
+            }
+            return response;
+        }
+
+        for (const auto& tool_call : parsed_msg.tool_calls) {
+            std::string tool_name = tool_call.name;
+            std::string tool_arguments = tool_call.arguments;
+
+            std::string result;
+            bool tool_skipped = false;
+
+            try {
+                for (const auto& callback : callbacks) {
+                    callback->before_tool_execution(tool_name, tool_arguments);
+                }
+            } catch (const ToolExecutionSkipped& e) {
+                json response;
+                response["skipped"] = e.get_message();
+                result = response.dump();
+                tool_skipped = true;
+            }
+
+            if (!tool_skipped) {
+                try {
+                    json args = json::parse(tool_arguments);
+
+                    auto tool_it = std::find_if(
+                      tools.begin(),
+                      tools.end(),
+                      [&tool_name](const std::unique_ptr<Tool>& t) {
+                          return t->get_name() == tool_name;
+                      });
+
+                    if (tool_it != tools.end()) {
+                        result = (*tool_it)->execute(args);
+                    } else {
+                        json error;
+                        error["error"] = "Tool not found: " + tool_name;
+                        result = error.dump();
+                    }
+                } catch (const std::exception& e) {
+                    result = std::string("Error executing tool: ") + e.what();
+                }
+            }
+
+            for (const auto& callback : callbacks) {
+                callback->after_tool_execution(tool_name, result);
+            }
+
+            common_chat_msg tool_msg;
+            tool_msg.role = "tool";
+            tool_msg.content = result;
+            tool_msg.tool_call_id = tool_call.id;
+            tool_msg.tool_name = tool_name;
+            messages.push_back(tool_msg);
+        }
+    }
+}
