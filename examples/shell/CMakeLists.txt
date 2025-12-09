@@ -11,6 +11,7 @@ add_executable(shell-example shell.cpp)
 
 target_include_directories(shell-example PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../../src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../shared
     ${LLAMA_SOURCE_DIR}/common
     ${LLAMA_SOURCE_DIR}/ggml/include
     ${LLAMA_SOURCE_DIR}/include

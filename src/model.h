@@ -66,7 +66,22 @@ class Model
     // Get the context for KV cache management
     [[nodiscard]] llama_context* get_context() const { return ctx; }
 
+    // Save the current KV cache state (processed_tokens) to a file
+    // Returns true on success, false on failure
+    bool save_cache(const std::string& cache_path);
+
+    // Load KV cache state from a file
+    // Returns the tokens that were cached, or empty vector on failure
+    // The loaded state will be applied to the context
+    std::vector<llama_token> load_cache(const std::string& cache_path);
+
   private:
+    // Set the internal cache state (used when loading from prompt cache)
+    void set_cache_state(const std::vector<llama_token>& tokens)
+    {
+        processed_tokens = tokens;
+        n_past = static_cast<int>(tokens.size());
+    }
     Model() = default;
 
     bool initialize(const std::string& model_path,

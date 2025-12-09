@@ -1,13 +1,14 @@
 #include "model.h"
 #include "chat.h"
+#include <algorithm>
 #include <cstdio>
 #include <stdexcept>
 
 std::unique_ptr<Model>
-Model::create(const std::string& model_path, const ModelConfig& sampler_config)
+Model::create(const std::string& model_path, const ModelConfig& model_config)
 {
     std::unique_ptr<Model> model(new Model());
-    if (!model->initialize(model_path, sampler_config)) {
+    if (!model->initialize(model_path, model_config)) {
         return nullptr;
     }
     return model;
@@ -28,9 +29,9 @@ Model::~Model()
 
 bool
 Model::initialize(const std::string& model_path,
-                  const ModelConfig& sampler_config)
+                  const ModelConfig& model_config)
 {
-    config_ = sampler_config;
+    config_ = model_config;
     ggml_backend_load_all();
 
     llama_model_params model_params = llama_model_default_params();
@@ -44,7 +45,7 @@ Model::initialize(const std::string& model_path,
     }
 
     llama_context_params ctx_params = llama_context_default_params();
-    ctx_params.n_ctx = 0; // Use default context size (model's max)
+    ctx_params.n_ctx = 10240;
     ctx_params.n_batch = -1;
 
     ctx = llama_init_from_model(model, ctx_params);
@@ -56,15 +57,15 @@ Model::initialize(const std::string& model_path,
 
     sampler = llama_sampler_chain_init(llama_sampler_chain_default_params());
     llama_sampler_chain_add(sampler,
-                            llama_sampler_init_top_k(sampler_config.top_k));
+                            llama_sampler_init_top_k(model_config.top_k));
     llama_sampler_chain_add(sampler,
-                            llama_sampler_init_top_p(sampler_config.top_p, 1));
+                            llama_sampler_init_top_p(model_config.top_p, 1));
     llama_sampler_chain_add(sampler,
-                            llama_sampler_init_min_p(sampler_config.min_p, 1));
+                            llama_sampler_init_min_p(model_config.min_p, 1));
     llama_sampler_chain_add(sampler,
-                            llama_sampler_init_temp(sampler_config.temp));
+                            llama_sampler_init_temp(model_config.temp));
     llama_sampler_chain_add(sampler,
-                            llama_sampler_init_dist(sampler_config.seed));
+                            llama_sampler_init_dist(model_config.seed));
 
     auto tmpls =
       common_chat_templates_init(model, /* chat_template_override */ "");
@@ -82,8 +83,11 @@ std::vector<llama_token>
 Model::tokenize(const std::string& prompt) const
 {
     const llama_vocab* vocab = llama_model_get_vocab(model);
-    const bool IS_FIRST =
-      llama_memory_seq_pos_max(llama_get_memory(ctx), 0) == -1;
+    // Use processed_tokens to determine if this is the first tokenization
+    // This is important for cache loading: even if KV cache memory is
+    // populated, we need IS_FIRST=true if we're tokenizing a full prompt from
+    // scratch to ensure consistent BOS token handling for prefix matching
+    const bool IS_FIRST = processed_tokens.empty();
 
     const int N_PROMPT_TOKENS = -llama_tokenize(
       vocab, prompt.c_str(), prompt.size(), nullptr, 0, IS_FIRST, true);
@@ -219,4 +223,33 @@ Model::generate_from_tokens(const std::vector<llama_token>& all_tokens,
     }
 
     return response;
+}
+
+bool
+Model::save_cache(const std::string& cache_path)
+{
+    return llama_state_save_file(ctx,
+                                 cache_path.c_str(),
+                                 processed_tokens.data(),
+                                 processed_tokens.size());
+}
+
+std::vector<llama_token>
+Model::load_cache(const std::string& cache_path)
+{
+    // Start with a reasonable capacity, will be resized based on actual count
+    std::vector<llama_token> tokens(llama_n_ctx(ctx));
+    size_t n_token_count_out = 0;
+
+    if (!llama_state_load_file(ctx,
+                               cache_path.c_str(),
+                               tokens.data(),
+                               tokens.capacity(),
+                               &n_token_count_out)) {
+        return {}; // Return empty on failure
+    }
+
+    tokens.resize(n_token_count_out);
+    set_cache_state(tokens);
+    return tokens;
 }

@@ -5,6 +5,7 @@
 #include "llama.h"
 #include "logging_callback.h"
 #include "model.h"
+#include "prompt_cache.h"
 #include "tool.h"
 #include <cstdio>
 #include <cstring>
@@ -175,7 +176,6 @@ class ReadMemoryTool : public Tool
             response["success"] = false;
             response["message"] = "No memory found with key '" + key + "'";
 
-            // Suggest available keys
             auto keys = g_memory_store->list_keys();
             if (!keys.empty()) {
                 response["available_keys"] = keys;
@@ -226,8 +226,6 @@ class ListMemoryTool : public Tool
     }
 };
 
-static const char* DEFAULT_MEMORY_FILE = "memories.json";
-
 static void
 print_usage(int /*unused*/, char** argv)
 {
@@ -236,8 +234,6 @@ print_usage(int /*unused*/, char** argv)
     printf("\n");
     printf("options:\n");
     printf("  -m <path>       Path to the GGUF model file (required)\n");
-    printf("  -f <path>       Path to memory file (default: %s)\n",
-           DEFAULT_MEMORY_FILE);
     printf("\n");
 }
 
@@ -245,20 +241,13 @@ int
 main(int argc, char** argv)
 {
     std::string model_path;
-    std::string memory_file = DEFAULT_MEMORY_FILE;
+    std::string memory_file = "memory.json";
 
     for (int i = 1; i < argc; i++) {
         try {
             if (strcmp(argv[i], "-m") == 0) {
                 if (i + 1 < argc) {
                     model_path = argv[++i];
-                } else {
-                    print_usage(argc, argv);
-                    return 1;
-                }
-            } else if (strcmp(argv[i], "-f") == 0) {
-                if (i + 1 < argc) {
-                    memory_file = argv[++i];
                 } else {
                     print_usage(argc, argv);
                     return 1;
@@ -278,14 +267,6 @@ main(int argc, char** argv)
         print_usage(argc, argv);
         return 1;
     }
-
-    llama_log_set(
-      [](enum ggml_log_level level, const char* text, void* /* user_data */) {
-          if (level >= GGML_LOG_LEVEL_ERROR) {
-              fprintf(stderr, "%s", text);
-          }
-      },
-      nullptr);
 
     printf("Initializing memory store...\n");
     g_memory_store = std::make_shared<MemoryStore>(memory_file);
@@ -322,9 +303,10 @@ main(int argc, char** argv)
 
     Agent agent(
       std::move(model), std::move(tools), std::move(callbacks), instructions);
+    load_or_create_agent_cache(agent, "memory.cache");
 
-    printf("\nMemory Agent ready! I can remember things about you.\n");
-    printf("   Try telling me your name, preferences, or ask me to remember "
+    printf("\nMemory Agent ready!\n");
+    printf("   Try telling me your name, preferences, or ask to remember "
            "something!\n");
     printf("   Type an empty line to quit.\n\n");
 

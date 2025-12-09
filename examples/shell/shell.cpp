@@ -4,6 +4,7 @@
 #include "chat_loop.h"
 #include "llama.h"
 #include "model.h"
+#include "prompt_cache.h"
 #include "tool.h"
 #include <algorithm>
 #include <array>
@@ -205,14 +206,6 @@ main(int argc, char** argv)
         return 1;
     }
 
-    llama_log_set(
-      [](enum ggml_log_level level, const char* text, void* /* user_data */) {
-          if (level >= GGML_LOG_LEVEL_ERROR) {
-              fprintf(stderr, "%s", text);
-          }
-      },
-      nullptr);
-
     printf("Setting up shell tool...\n");
     std::vector<std::unique_ptr<Tool>> tools;
     tools.push_back(std::make_unique<ShellTool>());
@@ -239,6 +232,8 @@ main(int argc, char** argv)
 
     Agent agent(
       std::move(model), std::move(tools), std::move(callbacks), instructions);
+
+    load_or_create_agent_cache(agent, "shell.cache");
 
     printf("Shell Agent ready!\n");
     printf("   This agent can execute shell commands and scripts.\n");

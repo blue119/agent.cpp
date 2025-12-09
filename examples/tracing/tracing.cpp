@@ -6,6 +6,7 @@
 #include "llama.h"
 #include "logging_callback.h"
 #include "model.h"
+#include "prompt_cache.h"
 #include "tool.h"
 
 #include <opentelemetry/exporters/otlp/otlp_http_exporter_factory.h>
@@ -236,14 +237,6 @@ main(int argc, char** argv)
         return 1;
     }
 
-    llama_log_set(
-      [](enum ggml_log_level level, const char* text, void* /* user_data */) {
-          if (level >= GGML_LOG_LEVEL_ERROR) {
-              fprintf(stderr, "%s", text);
-          }
-      },
-      nullptr);
-
     printf("Initializing OpenTelemetry tracer...\n");
     InitTracer(otlp_endpoint);
     printf("   Using OTLP endpoint: %s\n", otlp_endpoint.c_str());
@@ -285,6 +278,8 @@ main(int argc, char** argv)
 
     Agent agent(
       std::move(model), std::move(tools), std::move(callbacks), instructions);
+
+    load_or_create_agent_cache(agent, "tracing.cache");
 
     printf("\nTracing Agent ready! Try asking me to do some calculations.\n");
     printf("   Type an empty line to quit.\n\n");

@@ -13,9 +13,8 @@ Agent::Agent(std::unique_ptr<Model> model,
 {
 }
 
-std::string
-Agent::run_loop(std::vector<common_chat_msg>& messages,
-                const ResponseCallback& callback)
+void
+Agent::ensure_system_message(std::vector<common_chat_msg>& messages)
 {
     if (!instructions.empty()) {
         bool has_instructions = !messages.empty() &&
@@ -29,34 +28,48 @@ Agent::run_loop(std::vector<common_chat_msg>& messages,
             messages.insert(messages.begin(), system_msg);
         }
     }
+}
 
-    for (const auto& callback : callbacks) {
-        callback->before_agent_loop(messages);
-    }
-
+std::vector<common_chat_tool>
+Agent::get_tool_definitions() const
+{
     std::vector<common_chat_tool> tool_definitions;
     tool_definitions.reserve(tools.size());
     for (const auto& tool : tools) {
         tool_definitions.push_back(tool->get_definition());
     }
+    return tool_definitions;
+}
+
+std::string
+Agent::run_loop(std::vector<common_chat_msg>& messages,
+                const ResponseCallback& callback)
+{
+    ensure_system_message(messages);
+
+    for (const auto& cb : callbacks) {
+        cb->before_agent_loop(messages);
+    }
+
+    std::vector<common_chat_tool> tool_definitions = get_tool_definitions();
 
     while (true) {
-        for (const auto& callback : callbacks) {
-            callback->before_llm_call(messages);
+        for (const auto& cb : callbacks) {
+            cb->before_llm_call(messages);
         }
 
         auto parsed_msg = model->generate(messages, tool_definitions, callback);
 
-        for (const auto& callback : callbacks) {
-            callback->after_llm_call(parsed_msg);
+        for (const auto& cb : callbacks) {
+            cb->after_llm_call(parsed_msg);
         }
 
         messages.push_back(parsed_msg);
 
         if (parsed_msg.tool_calls.empty()) {
             std::string response = parsed_msg.content;
-            for (const auto& callback : callbacks) {
-                callback->after_agent_loop(messages, response);
+            for (const auto& cb : callbacks) {
+                cb->after_agent_loop(messages, response);
             }
             return response;
         }
@@ -69,8 +82,8 @@ Agent::run_loop(std::vector<common_chat_msg>& messages,
             bool tool_skipped = false;
 
             try {
-                for (const auto& callback : callbacks) {
-                    callback->before_tool_execution(tool_name, tool_arguments);
+                for (const auto& cb : callbacks) {
+                    cb->before_tool_execution(tool_name, tool_arguments);
                 }
             } catch (const ToolExecutionSkipped& e) {
                 json response;
@@ -102,8 +115,8 @@ Agent::run_loop(std::vector<common_chat_msg>& messages,
                 }
             }
 
-            for (const auto& callback : callbacks) {
-                callback->after_tool_execution(tool_name, result);
+            for (const auto& cb : callbacks) {
+                cb->after_tool_execution(tool_name, result);
             }
 
             common_chat_msg tool_msg;
