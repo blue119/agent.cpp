@@ -72,4 +72,3 @@ target_link_libraries(tracing-example PRIVATE
 target_compile_features(tracing-example PRIVATE cxx_std_17)
 
 message(STATUS "Tracing callback example configured.")
-message(STATUS "Usage: ./tracing-example -m <path-to-model.gguf> [-e <otlp-endpoint>]")

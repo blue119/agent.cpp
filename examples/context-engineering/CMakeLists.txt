@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(shell-example VERSION 0.1.0)
+project(context-engineering-example VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -7,9 +7,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../.. ${CMAKE_CURRENT_BINARY_DIR}/agent-cpp)
 
-add_executable(shell-example shell.cpp)
+add_executable(context-engineering-example context-engineering.cpp)
 
-target_include_directories(shell-example PRIVATE
+target_include_directories(context-engineering-example PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../../src
     ${CMAKE_CURRENT_SOURCE_DIR}/../shared
     ${LLAMA_SOURCE_DIR}/common
@@ -18,7 +18,7 @@ target_include_directories(shell-example PRIVATE
     ${LLAMA_SOURCE_DIR}/vendor
 )
 
-target_link_libraries(shell-example PRIVATE agent model common llama)
-target_compile_features(shell-example PRIVATE cxx_std_17)
+target_link_libraries(context-engineering-example PRIVATE agent model common llama)
+target_compile_features(context-engineering-example PRIVATE cxx_std_17)
 
-message(STATUS "Shell tool example configured.")
+message(STATUS "Context engineering example configured.")
