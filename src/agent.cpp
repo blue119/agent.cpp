@@ -1,6 +1,10 @@
 #include "agent.h"
+#include "error.h"
 #include <algorithm>
 #include <cstdio>
+
+using agent_cpp::ToolExecutionSkipped;
+using agent_cpp::ToolResult;
 
 Agent::Agent(std::unique_ptr<Model> model,
              std::vector<std::unique_ptr<Tool>> tools,
@@ -78,7 +82,7 @@ Agent::run_loop(std::vector<common_chat_msg>& messages,
             std::string tool_name = tool_call.name;
             std::string tool_arguments = tool_call.arguments;
 
-            std::string result;
+            ToolResult result("");
             bool tool_skipped = false;
 
             try {
@@ -94,7 +98,12 @@ Agent::run_loop(std::vector<common_chat_msg>& messages,
 
             if (!tool_skipped) {
                 try {
-                    json args = json::parse(tool_arguments);
+                    json args;
+                    try {
+                        args = json::parse(tool_arguments);
+                    } catch (const json::parse_error& e) {
+                        throw agent_cpp::ToolArgumentError(tool_name, e.what());
+                    }
 
                     auto tool_it = std::find_if(
                       tools.begin(),
@@ -103,25 +112,30 @@ Agent::run_loop(std::vector<common_chat_msg>& messages,
                           return t->get_name() == tool_name;
                       });
 
-                    if (tool_it != tools.end()) {
-                        result = (*tool_it)->execute(args);
-                    } else {
-                        json error;
-                        error["error"] = "Tool not found: " + tool_name;
-                        result = error.dump();
+                    if (tool_it == tools.end()) {
+                        throw agent_cpp::ToolNotFoundError(tool_name);
                     }
+
+                    result = (*tool_it)->execute(args);
                 } catch (const std::exception& e) {
-                    result = std::string("Error executing tool: ") + e.what();
+                    result = ToolResult::from_exception(e);
                 }
             }
 
+            // Single callback invocation - callbacks can convert errors to
+            // results
             for (const auto& cb : callbacks) {
                 cb->after_tool_execution(tool_name, result);
             }
 
+            // If still an error after callbacks, re-throw
+            if (result.has_error()) {
+                throw agent_cpp::ToolError(tool_name, result.error().message);
+            }
+
             common_chat_msg tool_msg;
             tool_msg.role = "tool";
-            tool_msg.content = result;
+            tool_msg.content = result.output();
             tool_msg.tool_call_id = tool_call.id;
             tool_msg.tool_name = tool_name;
             messages.push_back(tool_msg);

@@ -26,9 +26,11 @@ struct ModelConfig
 class Model
 {
   public:
-    // Initialize the model from a GGUF file
-    // Returns nullptr on failure
-    // Optional sampler_config allows customizing sampling parameters
+    /// @brief Initialize the model from a GGUF file
+    /// @param model_path Path to the GGUF model file
+    /// @param sampler_config Optional sampling configuration
+    /// @return Unique pointer to the initialized Model
+    /// @throws agent_cpp::ModelError if model loading or initialization fails
     static std::unique_ptr<Model> create(
       const std::string& model_path,
       const ModelConfig& sampler_config = ModelConfig{});
@@ -86,7 +88,7 @@ class Model
     }
     Model() = default;
 
-    bool initialize(const std::string& model_path,
+    void initialize(const std::string& model_path,
                     const ModelConfig& sampler_config);
 
     llama_model* model = nullptr;

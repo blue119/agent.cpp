@@ -2,10 +2,12 @@
 #include "callbacks.h"
 #include "chat.h"
 #include "chat_loop.h"
+#include "error.h"
 #include "llama.h"
 #include "model.h"
 #include "prompt_cache.h"
 #include "tool.h"
+
 #include <algorithm>
 #include <array>
 #include <cstdio>
@@ -14,6 +16,8 @@
 #include <memory>
 #include <string>
 #include <unistd.h>
+
+using agent_cpp::ToolExecutionSkipped;
 
 // Shell command execution tool
 // This demonstrates how an agent can combine multiple operations into a single
@@ -212,9 +216,11 @@ main(int argc, char** argv)
     printf("Shell tool configured\n");
 
     printf("Loading model...\n");
-    auto model = Model::create(model_path);
-    if (!model) {
-        fprintf(stderr, "%s: error: unable to initialize model\n", __func__);
+    std::unique_ptr<Model> model;
+    try {
+        model = Model::create(model_path);
+    } catch (const agent_cpp::ModelError& e) {
+        fprintf(stderr, "error: %s\n", e.what());
         return 1;
     }
     printf("Model loaded successfully\n\n");

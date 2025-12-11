@@ -3,6 +3,7 @@
 #include "callbacks.h"
 #include "chat.h"
 #include "chat_loop.h"
+#include "error.h"
 #include "llama.h"
 #include "logging_callback.h"
 #include "model.h"
@@ -253,9 +254,11 @@ main(int argc, char** argv)
     printf("Configured tools: calculator\n");
 
     printf("Loading model...\n");
-    auto model = Model::create(model_path);
-    if (!model) {
-        fprintf(stderr, "%s: error: unable to initialize model\n", __func__);
+    std::unique_ptr<Model> model;
+    try {
+        model = Model::create(model_path);
+    } catch (const agent_cpp::ModelError& e) {
+        fprintf(stderr, "error: %s\n", e.what());
         return 1;
     }
     printf("Model loaded and initialized successfully\n");

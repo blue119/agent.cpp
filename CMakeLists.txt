@@ -107,9 +107,10 @@ if(AGENT_CPP_INSTALL)
     # Install public headers
     install(FILES
         src/agent.h
+        src/callbacks.h
+        src/error.h
         src/model.h
         src/tool.h
-        src/callbacks.h
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/agent-cpp
     )
 

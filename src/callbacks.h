@@ -1,29 +1,10 @@
 #pragma once
 
 #include "chat.h"
-#include <stdexcept>
+#include "error.h"
+#include "tool_result.h"
 #include <string>
 #include <vector>
-
-// Exception that can be thrown from before_tool_execution to skip tool
-// execution. The provided message will be used as the tool result, allowing
-// users to communicate why the tool was not executed (e.g., "User cancelled").
-class ToolExecutionSkipped : public std::exception
-{
-  private:
-    std::string message;
-
-  public:
-    explicit ToolExecutionSkipped(
-      const std::string& msg = "Tool execution skipped")
-      : message(msg)
-    {
-    }
-
-    const char* what() const noexcept override { return message.c_str(); }
-
-    const std::string& get_message() const noexcept { return message; }
-};
 
 // Interface for agent lifecycle callbacks
 // Users can implement this interface to hook into various stages of the agent
@@ -65,11 +46,27 @@ class Callback
     {
     }
 
-    // Called after tool execution completes
+    // Called after tool execution completes (success or error)
     // @param tool_name: Name of the tool that was executed (can be modified)
-    // @param result: The result returned by the tool (can be modified)
+    // @param result: The result - either output string or ToolError
+    //
+    // To handle errors gracefully, check result.has_error() and use recover()
+    // to convert to a string result and continue execution:
+    //
+    //   void after_tool_execution(std::string& name, ToolResult& result) {
+    //       if (result.has_error()) {
+    //           // Explicitly recover from error with a message the agent can
+    //           see result.recover("{\"error\": \"" + result.error().message +
+    //           "\"}");
+    //       }
+    //   }
+    //
+    // If result remains an error after all callbacks, the exception is
+    // re-thrown.
     virtual void after_tool_execution(std::string& tool_name,
-                                      std::string& result)
+                                      agent_cpp::ToolResult& result)
     {
+        (void)tool_name;
+        (void)result;
     }
 };
