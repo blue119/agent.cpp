@@ -84,7 +84,7 @@ class ToolExecutionCallback : public Callback
                                std::string& arguments) override
     {
         if (should_skip_execution) {
-            throw ToolExecutionSkipped(skip_message);
+            throw agent_cpp::ToolExecutionSkipped(skip_message);
         }
         if (should_modify_tool_name) {
             tool_name = "modified_" + tool_name;
@@ -95,10 +95,10 @@ class ToolExecutionCallback : public Callback
     }
 
     void after_tool_execution(std::string& /*tool_name*/,
-                              std::string& result) override
+                              agent_cpp::ToolResult& result) override
     {
-        if (should_wrap_result) {
-            result = "[RESULT: " + result + "]";
+        if (should_wrap_result && result.is_ok()) {
+            result.recover("[RESULT: " + result.output() + "]");
         }
     }
 };
@@ -310,11 +310,12 @@ TEST(test_after_tool_execution_wraps_result)
     callback->should_wrap_result = true;
 
     std::string tool_name = "calculator";
-    std::string result = "42";
+    agent_cpp::ToolResult result("42");
 
     callback->after_tool_execution(tool_name, result);
 
-    ASSERT_STREQ(result.c_str(), "[RESULT: 42]");
+    ASSERT_TRUE(result.is_ok());
+    ASSERT_STREQ(result.output().c_str(), "[RESULT: 42]");
 }
 
 TEST(test_tool_execution_skipped_exception)
@@ -331,7 +332,7 @@ TEST(test_tool_execution_skipped_exception)
 
     try {
         callback->before_tool_execution(tool_name, arguments);
-    } catch (const ToolExecutionSkipped& e) {
+    } catch (const agent_cpp::ToolExecutionSkipped& e) {
         exception_caught = true;
         caught_message = e.get_message();
     }
@@ -342,14 +343,14 @@ TEST(test_tool_execution_skipped_exception)
 
 TEST(test_tool_execution_skipped_default_message)
 {
-    ToolExecutionSkipped ex;
+    agent_cpp::ToolExecutionSkipped ex;
     ASSERT_STREQ(ex.what(), "Tool execution skipped");
     ASSERT_STREQ(ex.get_message().c_str(), "Tool execution skipped");
 }
 
 TEST(test_tool_execution_skipped_custom_message)
 {
-    ToolExecutionSkipped ex("Custom skip reason");
+    agent_cpp::ToolExecutionSkipped ex("Custom skip reason");
     ASSERT_STREQ(ex.what(), "Custom skip reason");
     ASSERT_STREQ(ex.get_message().c_str(), "Custom skip reason");
 }
