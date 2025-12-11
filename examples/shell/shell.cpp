@@ -160,13 +160,17 @@ class ShellConfirmationCallback : public agent_cpp::Callback
     }
 
     void after_tool_execution(std::string& /*tool_name*/,
-                              std::string& result) override
+                              agent_cpp::ToolResult& result) override
     {
-        if (isatty(fileno(stderr))) {
-            fprintf(
-              stderr, "\033[34m[SHELL OUTPUT]\033[0m\n%s\n", result.c_str());
-        } else {
-            fprintf(stderr, "[SHELL OUTPUT]\n%s\n", result.c_str());
+        if (result.is_ok()) {
+            std::string output = result.output();
+            if (isatty(fileno(stderr))) {
+                fprintf(stderr,
+                        "\033[34m[SHELL OUTPUT]\033[0m\n%s\n",
+                        output.c_str());
+            } else {
+                fprintf(stderr, "[SHELL OUTPUT]\n%s\n", output.c_str());
+            }
         }
     }
 };
