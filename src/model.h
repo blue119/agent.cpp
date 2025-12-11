@@ -36,12 +36,20 @@ class Model
     /// @param sampler_config Optional sampling configuration
     /// @return Unique pointer to the initialized Model
     /// @throws agent_cpp::ModelError if model loading or initialization fails
-    static std::unique_ptr<Model> create(
+    static std::shared_ptr<Model> create(
       const std::string& model_path,
       const ModelConfig& sampler_config = ModelConfig{});
 
     // Destructor - Frees sampler, context, and model resources
     ~Model();
+
+    // Delete copy operations to prevent double-free
+    Model(const Model&) = delete;
+    Model& operator=(const Model&) = delete;
+
+    // Move operations
+    Model(Model&& other) noexcept;
+    Model& operator=(Model&& other) noexcept;
 
     // Generate text from chat messages and tools
     // Applies chat templates, tokenizes, and generates response

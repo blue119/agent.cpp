@@ -7,7 +7,7 @@ namespace agent_cpp {
 
 using json = nlohmann::json;
 
-Agent::Agent(std::unique_ptr<Model> model,
+Agent::Agent(std::shared_ptr<Model> model,
              std::vector<std::unique_ptr<Tool>> tools,
              std::vector<std::unique_ptr<Callback>> callbacks,
              const std::string& instructions)

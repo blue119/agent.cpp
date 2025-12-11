@@ -254,7 +254,7 @@ main(int argc, char** argv)
     printf("Configured tools: calculator\n");
 
     printf("Loading model...\n");
-    std::unique_ptr<agent_cpp::Model> model;
+    std::shared_ptr<agent_cpp::Model> model;
     try {
         model = agent_cpp::Model::create(model_path);
     } catch (const agent_cpp::ModelError& e) {

@@ -17,14 +17,14 @@ class Agent
   private:
     std::vector<std::unique_ptr<Callback>> callbacks;
     std::string instructions;
-    std::unique_ptr<Model> model;
+    std::shared_ptr<Model> model;
     std::vector<std::unique_ptr<Tool>> tools;
 
     // Helper to ensure system message with instructions is at the start
     void ensure_system_message(std::vector<common_chat_msg>& messages);
 
   public:
-    Agent(std::unique_ptr<Model> model,
+    Agent(std::shared_ptr<Model> model,
           std::vector<std::unique_ptr<Tool>> tools,
           std::vector<std::unique_ptr<Callback>> callbacks = {},
           const std::string& instructions = "");

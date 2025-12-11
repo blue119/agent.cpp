@@ -6,10 +6,10 @@
 
 namespace agent_cpp {
 
-std::unique_ptr<Model>
+std::shared_ptr<Model>
 Model::create(const std::string& model_path, const ModelConfig& model_config)
 {
-    std::unique_ptr<Model> model(new Model());
+    std::shared_ptr<Model> model(new Model());
     model->initialize(model_path, model_config);
     return model;
 }
@@ -25,6 +25,54 @@ Model::~Model()
     if (model != nullptr) {
         llama_model_free(model);
     }
+}
+
+Model::Model(Model&& other) noexcept
+  : model(other.model)
+  , ctx(other.ctx)
+  , sampler(other.sampler)
+  , templates(std::move(other.templates))
+  , processed_tokens(std::move(other.processed_tokens))
+  , n_past(other.n_past)
+  , config_(other.config_)
+{
+    other.model = nullptr;
+    other.ctx = nullptr;
+    other.sampler = nullptr;
+    other.n_past = 0;
+}
+
+Model&
+Model::operator=(Model&& other) noexcept
+{
+    if (this != &other) {
+        // Free existing resources
+        if (sampler != nullptr) {
+            llama_sampler_free(sampler);
+        }
+        if (ctx != nullptr) {
+            llama_free(ctx);
+        }
+        if (model != nullptr) {
+            llama_model_free(model);
+        }
+
+        // Move from other
+        model = other.model;
+        ctx = other.ctx;
+        sampler = other.sampler;
+        templates = std::move(other.templates);
+        processed_tokens = std::move(other.processed_tokens);
+        n_past = other.n_past;
+        config_ = other.config_;
+
+        // Nullify other
+        other.model = nullptr;
+        other.ctx = nullptr;
+        other.sampler = nullptr;
+        other.n_past = 0;
+    }
+    return *this;
 }
 
 void
