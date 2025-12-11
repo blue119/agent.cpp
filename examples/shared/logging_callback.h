@@ -7,12 +7,9 @@
 #include <string>
 #include <unistd.h>
 
-using json = nlohmann::json;
-using agent_cpp::ToolResult;
-
 // Logging callback to display tool execution information.
 // Shared across examples to provide consistent tool call logging.
-class LoggingCallback : public Callback
+class LoggingCallback : public agent_cpp::Callback
 {
   public:
     void before_tool_execution(std::string& tool_name,
@@ -29,7 +26,7 @@ class LoggingCallback : public Callback
     }
 
     void after_tool_execution(std::string& /*tool_name*/,
-                              ToolResult& result) override
+                              agent_cpp::ToolResult& result) override
     {
         if (result.has_error()) {
             if (isatty(fileno(stderr))) {
@@ -55,14 +52,14 @@ class LoggingCallback : public Callback
 // Error recovery callback that converts tool errors to JSON results.
 // This allows the agent to see the error and potentially retry or adjust.
 // Use this when you want resilient agents that don't crash on tool failures.
-class ErrorRecoveryCallback : public Callback
+class ErrorRecoveryCallback : public agent_cpp::Callback
 {
   public:
     void after_tool_execution(std::string& tool_name,
-                              ToolResult& result) override
+                              agent_cpp::ToolResult& result) override
     {
         if (result.has_error()) {
-            json err;
+            nlohmann::json err;
             err["error"] = true;
             err["tool"] = tool_name;
             err["message"] = result.error().message;

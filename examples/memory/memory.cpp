@@ -16,6 +16,8 @@
 #include <string>
 #include <unistd.h>
 
+using agent_cpp::json;
+
 class MemoryStore
 {
   private:
@@ -84,7 +86,7 @@ class MemoryStore
     }
 };
 
-class WriteMemoryTool : public Tool
+class WriteMemoryTool : public agent_cpp::Tool
 {
   private:
     std::shared_ptr<MemoryStore> store_;
@@ -138,7 +140,7 @@ class WriteMemoryTool : public Tool
     }
 };
 
-class ReadMemoryTool : public Tool
+class ReadMemoryTool : public agent_cpp::Tool
 {
   private:
     std::shared_ptr<MemoryStore> store_;
@@ -197,7 +199,7 @@ class ReadMemoryTool : public Tool
     }
 };
 
-class ListMemoryTool : public Tool
+class ListMemoryTool : public agent_cpp::Tool
 {
   private:
     std::shared_ptr<MemoryStore> store_;
@@ -290,16 +292,16 @@ main(int argc, char** argv)
     printf("   Using storage file: %s\n", memory_file.c_str());
 
     printf("Setting up memory tools...\n");
-    std::vector<std::unique_ptr<Tool>> tools;
+    std::vector<std::unique_ptr<agent_cpp::Tool>> tools;
     tools.push_back(std::make_unique<WriteMemoryTool>(memory_store));
     tools.push_back(std::make_unique<ReadMemoryTool>(memory_store));
     tools.push_back(std::make_unique<ListMemoryTool>(memory_store));
     printf("Configured tools: write_memory, read_memory, list_memory\n");
 
     printf("Loading model...\n");
-    std::unique_ptr<Model> model;
+    std::unique_ptr<agent_cpp::Model> model;
     try {
-        model = Model::create(model_path);
+        model = agent_cpp::Model::create(model_path);
     } catch (const agent_cpp::ModelError& e) {
         fprintf(stderr, "error: %s\n", e.what());
         return 1;
@@ -317,10 +319,10 @@ main(int argc, char** argv)
       "When needed, use list_memory to check if you have relevant stored "
       "memories.";
 
-    std::vector<std::unique_ptr<Callback>> callbacks;
+    std::vector<std::unique_ptr<agent_cpp::Callback>> callbacks;
     callbacks.push_back(std::make_unique<LoggingCallback>());
 
-    Agent agent(
+    agent_cpp::Agent agent(
       std::move(model), std::move(tools), std::move(callbacks), instructions);
     load_or_create_agent_cache(agent, "memory.cache");
 

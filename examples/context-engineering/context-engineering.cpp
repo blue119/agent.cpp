@@ -22,7 +22,7 @@ static constexpr size_t DEFAULT_MAX_TOOL_CALLS = 1;
 // Callback that trims old tool calls from the context
 // This demonstrates how to use before_llm_call to modify the messages
 // before they are sent to the LLM, keeping only the N most recent tool calls
-class ContextTrimmerCallback : public Callback
+class ContextTrimmerCallback : public agent_cpp::Callback
 {
   private:
     size_t max_recent_tool_calls;
@@ -172,9 +172,9 @@ main(int argc, char** argv)
     }
 
     printf("Loading model...\n");
-    std::unique_ptr<Model> model;
+    std::unique_ptr<agent_cpp::Model> model;
     try {
-        model = Model::create(model_path);
+        model = agent_cpp::Model::create(model_path);
     } catch (const agent_cpp::ModelError& e) {
         fprintf(stderr, "error: %s\n", e.what());
         return 1;
@@ -182,7 +182,7 @@ main(int argc, char** argv)
     printf("Model loaded successfully\n");
 
     printf("Setting up tools...\n");
-    std::vector<std::unique_ptr<Tool>> tools;
+    std::vector<std::unique_ptr<agent_cpp::Tool>> tools;
     tools.push_back(std::make_unique<CalculatorTool>());
     printf("Configured tools: calculator\n");
 
@@ -200,12 +200,12 @@ main(int argc, char** argv)
     printf("Context engineering: keeping %zu most recent tool calls\n",
            max_tool_calls);
 
-    std::vector<std::unique_ptr<Callback>> callbacks;
+    std::vector<std::unique_ptr<agent_cpp::Callback>> callbacks;
     callbacks.push_back(
       std::make_unique<ContextTrimmerCallback>(max_tool_calls));
     callbacks.push_back(std::make_unique<LoggingCallback>());
 
-    Agent agent(
+    agent_cpp::Agent agent(
       std::move(model), std::move(tools), std::move(callbacks), instructions);
 
     load_or_create_agent_cache(agent, "context-engineering.cache");

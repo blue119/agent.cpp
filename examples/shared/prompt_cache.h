@@ -8,9 +8,9 @@
 #include <vector>
 
 inline std::vector<llama_token>
-build_agent_prompt_tokens(Agent& agent)
+build_agent_prompt_tokens(agent_cpp::Agent& agent)
 {
-    Model* model = agent.get_model();
+    agent_cpp::Model* model = agent.get_model();
     if (!model) {
         return {};
     }
@@ -40,9 +40,10 @@ build_agent_prompt_tokens(Agent& agent)
 }
 
 inline bool
-load_or_create_agent_cache(Agent& agent, const std::string& cache_path)
+load_or_create_agent_cache(agent_cpp::Agent& agent,
+                           const std::string& cache_path)
 {
-    Model* model = agent.get_model();
+    agent_cpp::Model* model = agent.get_model();
     if (!model) {
         return false;
     }

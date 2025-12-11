@@ -7,6 +7,8 @@
 #include <optional>
 #include <string>
 
+namespace agent_cpp {
+
 // Callback for streaming response chunks
 using ResponseCallback = std::function<void(const std::string& chunk)>;
 
@@ -102,3 +104,5 @@ class Model
     int n_past = 0;                            // Track position in KV cache
     ModelConfig config_;                       // Store model configuration
 };
+
+} // namespace agent_cpp

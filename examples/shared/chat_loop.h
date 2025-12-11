@@ -13,7 +13,7 @@
 // The loop continues until the user enters an empty line.
 // Shared across examples to avoid code duplication.
 inline void
-run_chat_loop(Agent& agent)
+run_chat_loop(agent_cpp::Agent& agent)
 {
     std::vector<common_chat_msg> messages;
 

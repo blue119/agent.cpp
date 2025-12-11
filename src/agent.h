@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-using json = nlohmann::json;
+namespace agent_cpp {
 
 class Agent
 {
@@ -49,3 +49,5 @@ class Agent
     // Get the model (for cache operations)
     [[nodiscard]] Model* get_model() const { return model.get(); }
 };
+
+} // namespace agent_cpp

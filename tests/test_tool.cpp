@@ -1,9 +1,11 @@
 #include "test_utils.h"
 #include "tool.h"
 
+using agent_cpp::json;
+
 namespace {
 
-class TestTool : public Tool
+class TestTool : public agent_cpp::Tool
 {
   public:
     TestTool() = default;
@@ -48,7 +50,7 @@ TEST(test_tool_interface)
 
 TEST(test_tool_polymorphism)
 {
-    std::vector<std::shared_ptr<Tool>> tools;
+    std::vector<std::shared_ptr<agent_cpp::Tool>> tools;
     tools.push_back(std::make_shared<TestTool>());
 
     ASSERT_EQ(tools.size(), 1);

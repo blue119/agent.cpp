@@ -3,8 +3,9 @@
 #include <algorithm>
 #include <cstdio>
 
-using agent_cpp::ToolExecutionSkipped;
-using agent_cpp::ToolResult;
+namespace agent_cpp {
+
+using json = nlohmann::json;
 
 Agent::Agent(std::unique_ptr<Model> model,
              std::vector<std::unique_ptr<Tool>> tools,
@@ -102,7 +103,7 @@ Agent::run_loop(std::vector<common_chat_msg>& messages,
                     try {
                         args = json::parse(tool_arguments);
                     } catch (const json::parse_error& e) {
-                        throw agent_cpp::ToolArgumentError(tool_name, e.what());
+                        throw ToolArgumentError(tool_name, e.what());
                     }
 
                     auto tool_it = std::find_if(
@@ -113,7 +114,7 @@ Agent::run_loop(std::vector<common_chat_msg>& messages,
                       });
 
                     if (tool_it == tools.end()) {
-                        throw agent_cpp::ToolNotFoundError(tool_name);
+                        throw ToolNotFoundError(tool_name);
                     }
 
                     result = (*tool_it)->execute(args);
@@ -130,7 +131,7 @@ Agent::run_loop(std::vector<common_chat_msg>& messages,
 
             // If still an error after callbacks, re-throw
             if (result.has_error()) {
-                throw agent_cpp::ToolError(tool_name, result.error().message);
+                throw ToolError(tool_name, result.error().message);
             }
 
             common_chat_msg tool_msg;
@@ -142,3 +143,5 @@ Agent::run_loop(std::vector<common_chat_msg>& messages,
         }
     }
 }
+
+} // namespace agent_cpp

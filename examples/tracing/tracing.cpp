@@ -79,7 +79,7 @@ GetTracer()
                                                                "0.1.0");
 }
 
-class OpenTelemetryCallback : public Callback
+class OpenTelemetryCallback : public agent_cpp::Callback
 {
   private:
     std::string model_name;
@@ -249,21 +249,21 @@ main(int argc, char** argv)
     }
 
     printf("Setting up tools...\n");
-    std::vector<std::unique_ptr<Tool>> tools;
+    std::vector<std::unique_ptr<agent_cpp::Tool>> tools;
     tools.push_back(std::make_unique<CalculatorTool>());
     printf("Configured tools: calculator\n");
 
     printf("Loading model...\n");
-    std::unique_ptr<Model> model;
+    std::unique_ptr<agent_cpp::Model> model;
     try {
-        model = Model::create(model_path);
+        model = agent_cpp::Model::create(model_path);
     } catch (const agent_cpp::ModelError& e) {
         fprintf(stderr, "error: %s\n", e.what());
         return 1;
     }
     printf("Model loaded and initialized successfully\n");
 
-    std::vector<std::unique_ptr<Callback>> callbacks;
+    std::vector<std::unique_ptr<agent_cpp::Callback>> callbacks;
     callbacks.push_back(std::make_unique<LoggingCallback>());
     callbacks.push_back(std::make_unique<OpenTelemetryCallback>(
       model_name, "llama.cpp", "agent.cpp"));
@@ -279,7 +279,7 @@ main(int argc, char** argv)
       "'3 + 5' using the tool, then use the result to calculate the final "
       "answer.";
 
-    Agent agent(
+    agent_cpp::Agent agent(
       std::move(model), std::move(tools), std::move(callbacks), instructions);
 
     load_or_create_agent_cache(agent, "tracing.cache");

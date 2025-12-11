@@ -8,6 +8,8 @@
 
 #include "chat.h"
 
+namespace agent_cpp {
+
 using json = nlohmann::json;
 
 // Tool class that encapsulates a tool definition and its execution logic
@@ -25,3 +27,5 @@ class Tool
     // Get the tool's name
     virtual std::string get_name() const = 0;
 };
+
+} // namespace agent_cpp

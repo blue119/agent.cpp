@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <cstdio>
 
+namespace agent_cpp {
+
 std::unique_ptr<Model>
 Model::create(const std::string& model_path, const ModelConfig& model_config)
 {
@@ -35,8 +37,7 @@ Model::initialize(const std::string& model_path,
     llama_model_params model_params = llama_model_default_params();
     model = llama_model_load_from_file(model_path.c_str(), model_params);
     if (model == nullptr) {
-        throw agent_cpp::ModelError("unable to load model from '" + model_path +
-                                    "'");
+        throw ModelError("unable to load model from '" + model_path + "'");
     }
 
     llama_context_params ctx_params = llama_context_default_params();
@@ -45,7 +46,7 @@ Model::initialize(const std::string& model_path,
 
     ctx = llama_init_from_model(model, ctx_params);
     if (ctx == nullptr) {
-        throw agent_cpp::ModelError("failed to create llama context");
+        throw ModelError("failed to create llama context");
     }
 
     sampler = llama_sampler_chain_init(llama_sampler_chain_default_params());
@@ -63,7 +64,7 @@ Model::initialize(const std::string& model_path,
     auto tmpls =
       common_chat_templates_init(model, /* chat_template_override */ "");
     if (!tmpls) {
-        throw agent_cpp::ModelError("failed to initialize chat templates");
+        throw ModelError("failed to initialize chat templates");
     }
     templates = std::shared_ptr<common_chat_templates>(std::move(tmpls));
 }
@@ -110,7 +111,7 @@ Model::generate(const std::vector<common_chat_msg>& messages,
     // Tokenize the prompt
     std::vector<llama_token> prompt_tokens = tokenize(params.prompt);
     if (prompt_tokens.empty()) {
-        throw agent_cpp::ModelError("failed to tokenize prompt");
+        throw ModelError("failed to tokenize prompt");
     }
 
     std::string response = generate_from_tokens(prompt_tokens, callback);
@@ -156,7 +157,7 @@ Model::generate_from_tokens(const std::vector<llama_token>& all_tokens,
         size_t batch_size = std::min(all_tokens.size() - i, (size_t)n_batch);
 
         if (n_past + (int)batch_size > n_ctx) {
-            throw agent_cpp::ModelError("context size exceeded");
+            throw ModelError("context size exceeded");
         }
 
         std::vector<llama_token> batch_tokens(
@@ -166,7 +167,7 @@ Model::generate_from_tokens(const std::vector<llama_token>& all_tokens,
           llama_batch_get_one(batch_tokens.data(), batch_tokens.size());
 
         if (llama_decode(ctx, batch) != 0) {
-            throw agent_cpp::ModelError("failed to decode batch");
+            throw ModelError("failed to decode batch");
         }
 
         n_past += batch_tokens.size();
@@ -187,7 +188,7 @@ Model::generate_from_tokens(const std::vector<llama_token>& all_tokens,
         int n =
           llama_token_to_piece(vocab, new_token_id, buf, sizeof(buf), 0, true);
         if (n < 0) {
-            throw agent_cpp::ModelError("failed to convert token to piece");
+            throw ModelError("failed to convert token to piece");
         }
         std::string piece(buf, n);
 
@@ -197,13 +198,12 @@ Model::generate_from_tokens(const std::vector<llama_token>& all_tokens,
         response += piece;
 
         if (n_past + 1 > n_ctx) {
-            throw agent_cpp::ModelError(
-              "context size exceeded during generation");
+            throw ModelError("context size exceeded during generation");
         }
 
         llama_batch batch = llama_batch_get_one(&new_token_id, 1);
         if (llama_decode(ctx, batch) != 0) {
-            throw agent_cpp::ModelError("failed to decode token");
+            throw ModelError("failed to decode token");
         }
 
         n_past++;
@@ -241,3 +241,5 @@ Model::load_cache(const std::string& cache_path)
     set_cache_state(tokens);
     return tokens;
 }
+
+} // namespace agent_cpp

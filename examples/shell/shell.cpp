@@ -17,13 +17,14 @@
 #include <string>
 #include <unistd.h>
 
+using agent_cpp::json;
 using agent_cpp::ToolExecutionSkipped;
 
 // Shell command execution tool
 // This demonstrates how an agent can combine multiple operations into a single
 // shell script, instead of having to call individual tools like ls, mkdir,
 // touch, etc.
-class ShellTool : public Tool
+class ShellTool : public agent_cpp::Tool
 {
   public:
     ShellTool() = default;
@@ -101,7 +102,7 @@ class ShellTool : public Tool
     }
 };
 
-class ShellConfirmationCallback : public Callback
+class ShellConfirmationCallback : public agent_cpp::Callback
 {
   public:
     void before_tool_execution(std::string& tool_name,
@@ -211,14 +212,14 @@ main(int argc, char** argv)
     }
 
     printf("Setting up shell tool...\n");
-    std::vector<std::unique_ptr<Tool>> tools;
+    std::vector<std::unique_ptr<agent_cpp::Tool>> tools;
     tools.push_back(std::make_unique<ShellTool>());
     printf("Shell tool configured\n");
 
     printf("Loading model...\n");
-    std::unique_ptr<Model> model;
+    std::unique_ptr<agent_cpp::Model> model;
     try {
-        model = Model::create(model_path);
+        model = agent_cpp::Model::create(model_path);
     } catch (const agent_cpp::ModelError& e) {
         fprintf(stderr, "error: %s\n", e.what());
         return 1;
@@ -233,10 +234,10 @@ main(int argc, char** argv)
       "separate ls, mkdir, touch tools), you can combine everything into a "
       "single shell command or script.";
 
-    std::vector<std::unique_ptr<Callback>> callbacks;
+    std::vector<std::unique_ptr<agent_cpp::Callback>> callbacks;
     callbacks.push_back(std::make_unique<ShellConfirmationCallback>());
 
-    Agent agent(
+    agent_cpp::Agent agent(
       std::move(model), std::move(tools), std::move(callbacks), instructions);
 
     load_or_create_agent_cache(agent, "shell.cache");

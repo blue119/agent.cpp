@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-class InputModifyingCallback : public Callback
+class InputModifyingCallback : public agent_cpp::Callback
 {
   public:
     bool add_custom_message = false;
@@ -25,7 +25,7 @@ class InputModifyingCallback : public Callback
     }
 };
 
-class OutputModifyingCallback : public Callback
+class OutputModifyingCallback : public agent_cpp::Callback
 {
   public:
     bool should_append_to_content = false;
@@ -46,7 +46,7 @@ class OutputModifyingCallback : public Callback
     }
 };
 
-class AgentLoopCallback : public Callback
+class AgentLoopCallback : public agent_cpp::Callback
 {
   public:
     bool should_add_system_msg = false;
@@ -71,7 +71,7 @@ class AgentLoopCallback : public Callback
     }
 };
 
-class ToolExecutionCallback : public Callback
+class ToolExecutionCallback : public agent_cpp::Callback
 {
   public:
     bool should_modify_tool_name = false;

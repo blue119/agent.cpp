@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+namespace agent_cpp {
+
 // Interface for agent lifecycle callbacks
 // Users can implement this interface to hook into various stages of the agent
 // execution
@@ -64,9 +66,11 @@ class Callback
     // If result remains an error after all callbacks, the exception is
     // re-thrown.
     virtual void after_tool_execution(std::string& tool_name,
-                                      agent_cpp::ToolResult& result)
+                                      ToolResult& result)
     {
         (void)tool_name;
         (void)result;
     }
 };
+
+} // namespace agent_cpp

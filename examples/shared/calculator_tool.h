@@ -4,14 +4,14 @@
 
 // A simple calculator tool for basic mathematical operations.
 // Shared across examples to avoid code duplication.
-class CalculatorTool : public Tool
+class CalculatorTool : public agent_cpp::Tool
 {
   public:
     CalculatorTool() = default;
 
     common_chat_tool get_definition() const override
     {
-        json schema = {
+        agent_cpp::json schema = {
             { "type", "object" },
             { "properties",
               { { "operation",
@@ -35,13 +35,13 @@ class CalculatorTool : public Tool
 
     std::string get_name() const override { return "calculator"; }
 
-    std::string execute(const json& arguments) override
+    std::string execute(const agent_cpp::json& arguments) override
     {
         std::string op = arguments.at("operation").get<std::string>();
         double a = arguments.at("a").get<double>();
         double b = arguments.at("b").get<double>();
 
-        json response;
+        agent_cpp::json response;
         double result = 0;
 
         if (op == "add") {
