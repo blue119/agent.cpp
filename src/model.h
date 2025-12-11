@@ -4,6 +4,7 @@
 #include "llama.h"
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 // Callback for streaming response chunks
@@ -17,7 +18,9 @@ struct ModelConfig
     int top_k = 0;
     float temp = 0.0F;
     uint32_t seed = LLAMA_DEFAULT_SEED;
-    common_chat_format chat_format = COMMON_CHAT_FORMAT_HERMES_2_PRO;
+    // Chat format for parsing tool calls. When nullopt (default), the format
+    // is auto-detected from the model's chat template.
+    std::optional<common_chat_format> chat_format = std::nullopt;
     int n_ctx = 10240;
     int n_batch = -1;
 };
