@@ -110,6 +110,14 @@ if(AGENT_CPP_BUILD_TESTS)
     add_test(NAME CallbacksTests COMMAND test_callbacks)
     add_test(NAME ModelTests COMMAND test_model)
 
+    # On Windows, DLLs are placed in the bin/ directory by llama.cpp
+    # We need to add this directory to PATH so tests can find the DLLs
+    if(WIN32)
+        set_tests_properties(ToolTests CallbacksTests ModelTests PROPERTIES
+            ENVIRONMENT "PATH=${CMAKE_BINARY_DIR}/bin\;$ENV{PATH}"
+        )
+    endif()
+
     message(STATUS "Tests enabled. Run with: ctest or ./test_tool")
 endif()
 
