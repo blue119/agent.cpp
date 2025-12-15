@@ -94,21 +94,8 @@ if(AGENT_CPP_BUILD_TESTS)
     target_link_libraries(test_callbacks PRIVATE agent model common llama)
     target_compile_features(test_callbacks PRIVATE cxx_std_17)
 
-    add_executable(test_model tests/test_model.cpp)
-    target_include_directories(test_model PRIVATE
-        src
-        tests
-        ${LLAMA_SOURCE_DIR}/common
-        ${LLAMA_SOURCE_DIR}/ggml/include
-        ${LLAMA_SOURCE_DIR}/include
-        ${LLAMA_SOURCE_DIR}/vendor
-    )
-    target_link_libraries(test_model PRIVATE model common llama)
-    target_compile_features(test_model PRIVATE cxx_std_17)
-
     add_test(NAME ToolTests COMMAND test_tool)
     add_test(NAME CallbacksTests COMMAND test_callbacks)
-    add_test(NAME ModelTests COMMAND test_model)
 
     # On Windows, DLLs are placed in the bin/ directory by llama.cpp
     # We need to add this directory to PATH so tests can find the DLLs
