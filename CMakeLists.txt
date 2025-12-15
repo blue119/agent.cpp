@@ -100,7 +100,7 @@ if(AGENT_CPP_BUILD_TESTS)
     # On Windows, DLLs are placed in the bin/ directory by llama.cpp
     # We need to add this directory to PATH so tests can find the DLLs
     if(WIN32)
-        set_tests_properties(ToolTests CallbacksTests ModelTests PROPERTIES
+        set_tests_properties(ToolTests CallbacksTests PROPERTIES
             ENVIRONMENT "PATH=${CMAKE_BINARY_DIR}/bin\;$ENV{PATH}"
         )
     endif()
