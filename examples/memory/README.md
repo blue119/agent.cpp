@@ -65,6 +65,21 @@ The agent will use the `write_memory` tool to write to the memory:
 ```console
 $ ./build/memory-example -m ../../granite-4.0-micro-Q8_0.gguf
 > My name is David and I love surfing
+<tool_call>
+{"name": "write_memory", "arguments": "{\n  \"key\": \"user_name\",\n  \"value\": \"David\"\n}"}
+</tool_call>
+[TOOL EXECUTION] Calling write_memory
+[TOOL RESULT]
+{"message":"Successfully stored memory with key 'user_name'","success":true}
+<tool_call>
+{"name": "write_memory", "arguments": {
+  "key": "interest",
+  "value": "surfing"
+}}
+</tool_call>
+[TOOL EXECUTION] Calling write_memory
+[TOOL RESULT]
+{"message":"Successfully stored memory with key 'interest'","success":true}
 ```
 
 If you close the previous one and start a new conversation,
@@ -74,4 +89,28 @@ If you close the previous one and start a new conversation,
 $ ./build/memory-example -m ../../granite-4.0-micro-Q8_0.gguf
 > What do you know about me?
 
+<tool_call>
+{"name": "list_memory", "arguments": "{}"}
+</tool_call>
+[TOOL EXECUTION] Calling list_memory
+[TOOL RESULT]
+{"keys":["interest","user_name"],"message":"Available memory keys:","success":true}
+<tool_call>
+{"name": "read_memory", "arguments": {"key": "user_name"}}
+</tool_call>
+[TOOL EXECUTION] Calling read_memory
+[TOOL RESULT]
+{"key":"user_name","success":true,"value":"David"}
+<tool_call>
+{"name": "read_memory", "arguments": {"key":"interest"}}
+</tool_call>
+[TOOL EXECUTION] Calling read_memory
+[TOOL RESULT]
+{"key":"interest","success":true,"value":"surfing"}
+I have stored two pieces of information about you:
+
+- **User name:** David
+- **Interest:** Surfing
+
+Let me know if there's anything else you'd like to add or discuss!
 ```

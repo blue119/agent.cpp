@@ -216,12 +216,11 @@ class ListMemoryTool : public agent_cpp::Tool
                         { "properties", json::object() },
                         { "required", json::array() } };
 
-        return {
-            "list_memory",
-            "List all available memory keys that have been stored. Use "
-            "this to see what information has been remembered about the user.",
-            schema.dump()
-        };
+        return { "list_memory",
+                 "List all available memory keys that have been stored."
+                 "You can use the returned keys with the read_memory tool to "
+                 "retrieve the corresponding information.",
+                 schema.dump() };
     }
 
     std::string get_name() const override { return "list_memory"; }
@@ -320,7 +319,7 @@ main(int argc, char** argv)
       "preferences, "
       "or important facts), you must use write_memory to store it. "
       "When needed, use list_memory to check if you have relevant stored "
-      "memories.";
+      "memories and then use read_memory to retrieve them.";
 
     std::vector<std::unique_ptr<agent_cpp::Callback>> callbacks;
     callbacks.push_back(std::make_unique<LoggingCallback>());
