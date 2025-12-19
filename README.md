@@ -24,7 +24,7 @@ wget https://huggingface.co/ibm-granite/granite-4.0-micro-GGUF/resolve/main/gran
 ```
 
 > [!IMPORTANT]
-> If you use a different model, you will probably have to adjust the values in `ModelConfig`.
+> The examples use default `ModelConfig` values optimized for `granite-4.0-micro`. If you use a different model, you should adapt these values (context size, temperature, sampling parameters, etc.) to your specific use case.
 
 # Building Blocks
 

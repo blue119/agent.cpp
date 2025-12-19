@@ -99,7 +99,11 @@ class MathAgent
     MathAgent(std::shared_ptr<agent_cpp::ModelWeights> weights,
               const std::string& cache_path)
     {
-        auto model = agent_cpp::Model::create_with_weights(weights);
+        auto model_config = agent_cpp::ModelConfig{};
+        model_config.n_ctx = 10240;
+        model_config.temp = 0.0F;
+        auto model =
+          agent_cpp::Model::create_with_weights(weights, model_config);
 
         std::vector<std::unique_ptr<agent_cpp::Tool>> tools;
         tools.push_back(std::make_unique<CalculatorTool>());
@@ -175,7 +179,11 @@ class MainAgent
               MathAgent* math_agent,
               const std::string& cache_path)
     {
-        auto model = agent_cpp::Model::create_with_weights(weights);
+        auto model_config = agent_cpp::ModelConfig{};
+        model_config.n_ctx = 10240;
+        model_config.temp = 0.0F;
+        auto model =
+          agent_cpp::Model::create_with_weights(weights, model_config);
 
         std::vector<std::unique_ptr<agent_cpp::Tool>> tools;
         tools.push_back(std::make_unique<DelegateMathTool>(math_agent));

@@ -224,6 +224,7 @@ main(int argc, char** argv)
     std::shared_ptr<agent_cpp::Model> model;
     auto model_config = agent_cpp::ModelConfig{};
     model_config.n_ctx = 16384;
+    model_config.temp = 0.0F;
     try {
         model = agent_cpp::Model::create(model_path, model_config);
     } catch (const agent_cpp::ModelError& e) {
