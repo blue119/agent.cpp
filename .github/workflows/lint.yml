@@ -38,7 +38,7 @@ jobs:
         clang-tidy --version
 
     - name: Configure CMake
-      run: cmake -B build -S . -DAGENT_CPP_BUILD_MCP=ON
+      run: cmake -B build -S . -DAGENT_CPP_BUILD_MCP=ON -DAGENT_CPP_BUILD_OAUTH=ON
 
     - name: Run pre-commit
       run: pre-commit run --all-files --show-diff-on-failure --verbose
