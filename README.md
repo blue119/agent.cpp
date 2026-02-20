@@ -1,9 +1,11 @@
 # agent.cpp
 
-Building blocks for **local** agents in C++.
+Building blocks for agents in C++.
 
 > [!NOTE]
-> This library is designed for running small language models locally using [llama.cpp](https://github.com/ggml-org/llama.cpp). If you want to call external LLM APIs, this is not the right fit.
+> Upstream (`mozilla-ai/agent.cpp`) is designed for running small language models locally using [llama.cpp](https://github.com/ggml-org/llama.cpp).
+>
+> This fork adds an optional **RemoteModel** for calling a remote, OpenAI-compatible API via **OpenRouter** (REST), for cases where you don't have the hardware to run local LLMs.
 
 # Examples
 
@@ -17,7 +19,12 @@ Building blocks for **local** agents in C++.
 
 - **[Tracing](./examples/tracing/README.md)** - Use callbacks to collect a record of the steps of the agent loop with OpenTelemetry.
 
-You need to download a GGUF model in order to run the examples, the default model configuration is set for `granite-4.0-micro`:
+- **Remote (OpenRouter)** - Minimal example using the fork's RemoteModel: `examples/remote/remote.cpp`
+
+> [!TIP]
+> Local examples require downloading a GGUF model. The remote example does **not** require a local model.
+
+You need to download a GGUF model in order to run the local examples, the default model configuration is set for `granite-4.0-micro`:
 
 ```bash
 wget https://huggingface.co/ibm-granite/granite-4.0-micro-GGUF/resolve/main/granite-4.0-micro-Q8_0.gguf
@@ -61,7 +68,9 @@ A system prompt that defines the agent's behavior and capabilities. Passed to th
 
 ## Model
 
-Encapsulates **local** LLM initialization and inference using [llama.cpp](https://github.com/ggml-org/llama.cpp). This is tightly coupled to llama.cpp and requires models in GGUF format.
+By default, this project encapsulates **local** LLM initialization and inference using [llama.cpp](https://github.com/ggml-org/llama.cpp) (GGUF models).
+
+This fork also includes an optional **RemoteModel** (OpenRouter REST) that implements the same model interface used by the agent loop.
 
 Handles:
 
@@ -83,6 +92,43 @@ When the model decides to use a tool, the agent parses the tool call, executes i
 # Usage
 
 **C++ Standard:** Requires **C++17** or higher.
+
+## Remote LLM (OpenRouter) (this fork)
+
+### Build
+
+RemoteModel is optional and guarded behind a CMake option (requires OpenSSL):
+
+```bash
+git submodule update --init --recursive
+
+cmake -B build \
+  -DAGENT_CPP_BUILD_EXAMPLES=ON \
+  -DAGENT_CPP_BUILD_REMOTE=ON \
+  -DCMAKE_BUILD_TYPE=Release
+
+cmake --build build -j4
+```
+
+### Run the remote example
+
+Set env vars:
+
+```bash
+export OPENROUTER_API_KEY="..."
+export OPENROUTER_MODEL="openai/gpt-4.1-mini"   # optional
+# export OPENROUTER_BASE_URL="https://openrouter.ai/api/v1"  # optional
+```
+
+Run:
+
+```bash
+./build/remote-example
+```
+
+Notes:
+- RemoteModel uses `POST {OPENROUTER_BASE_URL}/chat/completions` (OpenAI-compatible).
+- Tool calling is supported; tool results are sent back as `role=tool` messages.
 
 ## Option 1: FetchContent (Recommended)
 
