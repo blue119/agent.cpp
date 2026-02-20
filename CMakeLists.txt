@@ -8,6 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(AGENT_CPP_BUILD_TESTS "Build agent.cpp tests" OFF)
 option(AGENT_CPP_BUILD_EXAMPLES "Build agent.cpp examples" OFF)
 option(AGENT_CPP_BUNDLED_LLAMA "Bundle llama.cpp (vs. find installed)" ON)
+option(AGENT_CPP_BUILD_REMOTE "Build RemoteModel (OpenRouter REST; requires OpenSSL)" OFF)
 
 set(LLAMA_CPP_DIR "" CACHE PATH "Path to existing llama.cpp directory (leave empty to use submodule)")
 
@@ -49,6 +50,14 @@ else()
 endif()
 
 add_library(model STATIC src/model.cpp)
+
+if(AGENT_CPP_BUILD_REMOTE)
+    find_package(OpenSSL REQUIRED)
+    target_sources(model PRIVATE src/remote_model.cpp)
+    target_include_directories(model PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/deps/cpp-httplib>)
+    target_link_libraries(model PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+    message(STATUS "RemoteModel enabled (OpenRouter via cpp-httplib + OpenSSL)")
+endif()
 add_library(agent-cpp::model ALIAS model)
 target_include_directories(model
     PUBLIC
@@ -171,6 +180,16 @@ if(AGENT_CPP_BUILD_TESTS)
 endif()
 
 if(AGENT_CPP_BUILD_EXAMPLES)
+    # Remote (OpenRouter) example
+    add_executable(remote-example examples/remote/remote.cpp)
+    target_include_directories(remote-example PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/examples/shared
+        ${LLAMA_SOURCE_DIR}/common
+    )
+    target_link_libraries(remote-example PRIVATE agent model common llama)
+    target_compile_features(remote-example PRIVATE cxx_std_17)
+
     # Shell example
     add_executable(shell-example examples/shell/shell.cpp)
     target_include_directories(shell-example PRIVATE

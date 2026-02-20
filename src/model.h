@@ -38,6 +38,44 @@ struct ModelConfig
 // Forward declaration
 class Model;
 
+// IModel interface: allows swapping local llama.cpp model with remote providers.
+//
+// The Agent only needs generate() for the agent loop. Prompt caching is optional
+// and can be disabled by returning supports_prompt_cache=false.
+class IModel
+{
+  public:
+    virtual ~IModel() = default;
+
+    virtual common_chat_msg generate(const std::vector<common_chat_msg>& messages,
+                                     const std::vector<common_chat_tool>& tools,
+                                     const ResponseCallback& callback = nullptr) = 0;
+
+    [[nodiscard]] virtual bool supports_prompt_cache() const { return false; }
+
+    // Optional cache-related APIs (only meaningful for local llama.cpp Model).
+    [[nodiscard]] virtual common_chat_templates* get_templates() const
+    {
+        return nullptr;
+    }
+    virtual std::vector<llama_token> tokenize(const std::string& /*prompt*/) const
+    {
+        return {};
+    }
+    virtual std::string generate_from_tokens(
+      const std::vector<llama_token>& /*all_tokens*/,
+      const ResponseCallback& /*callback*/ = nullptr)
+    {
+        return {};
+    }
+    virtual bool save_cache(const std::string& /*cache_path*/) { return false; }
+    virtual std::vector<llama_token> load_cache(const std::string& /*cache_path*/)
+    {
+        return {};
+    }
+};
+
+
 /// @brief Immutable model weights that can be shared across multiple Model
 /// instances.
 ///
@@ -88,7 +126,7 @@ class ModelWeights
 
 // Model interface - encapsulates context and text generation
 // Each Model instance has its own context (KV cache) but can share weights
-class Model
+class Model : public IModel
 {
   public:
     /// @brief Initialize the model from a GGUF file
@@ -128,20 +166,22 @@ class Model
     // Returns parsed message with role set to "assistant"
     common_chat_msg generate(const std::vector<common_chat_msg>& messages,
                              const std::vector<common_chat_tool>& tools,
-                             const ResponseCallback& callback = nullptr);
+                             const ResponseCallback& callback = nullptr) override;
 
     // Generate text from pre-tokenized input, only processing new tokens
     // Uses KV cache efficiently by tracking previously processed tokens
     std::string generate_from_tokens(
       const std::vector<llama_token>& all_tokens,
-      const ResponseCallback& callback = nullptr);
+      const ResponseCallback& callback = nullptr) override;
 
     // Tokenize a prompt string into tokens
     // Returns empty vector on failure
-    std::vector<llama_token> tokenize(const std::string& prompt) const;
+    std::vector<llama_token> tokenize(const std::string& prompt) const override;
+
+    [[nodiscard]] bool supports_prompt_cache() const override { return true; }
 
     // Get the chat templates
-    [[nodiscard]] common_chat_templates* get_templates() const
+    [[nodiscard]] common_chat_templates* get_templates() const override
     {
         return weights_->get_templates();
     }
@@ -163,12 +203,12 @@ class Model
 
     // Save the current KV cache state (processed_tokens) to a file
     // Returns true on success, false on failure
-    bool save_cache(const std::string& cache_path);
+    bool save_cache(const std::string& cache_path) override;
 
     // Load KV cache state from a file
     // Returns the tokens that were cached, or empty vector on failure
     // The loaded state will be applied to the context
-    std::vector<llama_token> load_cache(const std::string& cache_path);
+    std::vector<llama_token> load_cache(const std::string& cache_path) override;
 
   private:
     // Set the internal cache state (used when loading from prompt cache)

@@ -17,14 +17,14 @@ class Agent
   private:
     std::vector<std::unique_ptr<Callback>> callbacks;
     std::string instructions;
-    std::shared_ptr<Model> model;
+    std::shared_ptr<IModel> model;
     std::vector<std::unique_ptr<Tool>> tools;
 
     // Helper to ensure system message with instructions is at the start
     void ensure_system_message(std::vector<common_chat_msg>& messages);
 
   public:
-    Agent(std::shared_ptr<Model> model,
+    Agent(std::shared_ptr<IModel> model,
           std::vector<std::unique_ptr<Tool>> tools,
           std::vector<std::unique_ptr<Callback>> callbacks = {},
           const std::string& instructions = "");
@@ -47,7 +47,7 @@ class Agent
     }
 
     // Get the model (for cache operations)
-    [[nodiscard]] Model* get_model() const { return model.get(); }
+    [[nodiscard]] IModel* get_model() const { return model.get(); }
 
     // Load prompt cache from file, or create it if it doesn't exist
     // Returns true on success, false on failure

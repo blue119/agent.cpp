@@ -8,7 +8,7 @@ namespace agent_cpp {
 
 using json = nlohmann::json;
 
-Agent::Agent(std::shared_ptr<Model> model,
+Agent::Agent(std::shared_ptr<IModel> model,
              std::vector<std::unique_ptr<Tool>> tools,
              std::vector<std::unique_ptr<Callback>> callbacks,
              const std::string& instructions)
@@ -148,7 +148,7 @@ Agent::run_loop(std::vector<common_chat_msg>& messages,
 std::vector<llama_token>
 Agent::build_prompt_tokens()
 {
-    if (!model) {
+    if (!model || !model->supports_prompt_cache()) {
         return {};
     }
 
@@ -177,7 +177,7 @@ Agent::build_prompt_tokens()
 bool
 Agent::load_or_create_cache(const std::string& cache_path)
 {
-    if (!model) {
+    if (!model || !model->supports_prompt_cache()) {
         return false;
     }
 
